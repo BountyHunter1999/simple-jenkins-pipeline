@@ -3,6 +3,8 @@ services:
   jenkins-docker:
     image: docker:dind
     container_name: jenkins-docker
+    # running docker in docker requires privileges access
+    # to function properly
     privileged: true
     networks:
       - jenkins
@@ -16,6 +18,29 @@ services:
       - "2376:2376"
       - "3000:3000"
       - "5000:5000"
+  jenkins-blueocean:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    # set image and tag
+    image: myjenkins-blueocean:2.401.2-1
+    container_name: jenkins-blueocean
+    networks:
+      - jenkins
+    environment:
+      - DOCKER_HOST=tcp://jenkins-docker:2376
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+      - JAVA_OPTS=-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true
+    ports:
+      # access Jenkins at this port
+      - 8080:8080
+      - 50000:50000
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client:ro
+      - "$HOME:/home"
+    restart: on-failure
 
 networks:
   jenkins:
