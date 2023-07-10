@@ -28,8 +28,10 @@ services:
     networks:
       - jenkins
     environment:
+      # connect to the Docker daemon from the previous step.
       - DOCKER_HOST=tcp://jenkins-docker:2376
       - DOCKER_CERT_PATH=/certs/client
+      # TLS verification is enabled for the connection to the Docker daemon
       - DOCKER_TLS_VERIFY=1
       - JAVA_OPTS=-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true
     ports:
