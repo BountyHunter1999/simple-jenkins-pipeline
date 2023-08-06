@@ -1,21 +1,26 @@
 version: "3.9"
 services:
   jenkins-docker:
+    # run docker commands inside jenkins nodes 
     image: docker:dind
     container_name: jenkins-docker
     # running docker in docker requires privileges access
     # to function properly
     privileged: true
+    # network_alias: docker
     networks:
       - jenkins
-    # network_alias: docker
+    # due to the use of privileged this is recommended
+    # and requires shared volume
     environment:
       - DOCKER_TLS_CERTDIR=/certs
     volumes:
       - jenkins-docker-certs:/certs/client
       - jenkins-data:/var/jenkins_home
     ports:
-      - "2376:2376"
+      # docker daemon port on the host machine
+      - "2376:2376" 
+      # expose these ports from the docker in docker container
       - "3000:3000"
       - "5000:5000"
   jenkins-blueocean:
@@ -28,15 +33,17 @@ services:
     networks:
       - jenkins
     environment:
-      # connect to the Docker daemon from the previous step.
+      # connect to the Docker daemon from the above service.
       - DOCKER_HOST=tcp://jenkins-docker:2376
       - DOCKER_CERT_PATH=/certs/client
       # TLS verification is enabled for the connection to the Docker daemon
       - DOCKER_TLS_VERIFY=1
       - JAVA_OPTS=-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true
     ports:
-      # access Jenkins at this port
+      # access Jenkins at this port on host machine
       - 8080:8080
+      # if set one or more inbound jenkins agents on other machines
+      # default port for inbound jenkins agents communication with jenkins
       - 50000:50000
     volumes:
       - jenkins-data:/var/jenkins_home
